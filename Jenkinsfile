@@ -1,30 +1,31 @@
 REGION = 'ap-northeast-2'
-	EKS_API = 'https://05AF9B978004587F32EB5F7BFBA55723.gr7.ap-northeast-2.eks.amazonaws.com'
-	EKS_CLUSTER_NAME='test-cluster'
-	EKS_NAMESPACE='default'
-	EKS_JENKINS_CREDENTIAL_ID='kubectl-deploy-credentials'
-	ECR_PATH = '690767153734.dkr.ecr.ap-northeast-2.amazonaws.com'
-	ECR_IMAGE = 'jenkins-ecr'
-	AWS_CREDENTIAL_ID = 'aws-credentials'
+EKS_API = 'https://05AF9B978004587F32EB5F7BFBA55723.gr7.ap-northeast-2.eks.amazonaws.com'
+EKS_CLUSTER_NAME='test-cluster'
+EKS_NAMESPACE='default'
+EKS_JENKINS_CREDENTIAL_ID='kubectl-deploy-credentials'
+ECR_PATH = '690767153734.dkr.ecr.ap-northeast-2.amazonaws.com'
+ECR_IMAGE = 'jenkins-ecr'
+AWS_CREDENTIAL_ID = 'jenkins-aws-credentials'
 
-	node {
-		stage('Clone Repository'){
-			checkout scm
+node {
+	stage('Clone Repository'){
+		checkout scm
+	}
+	stage('Docker Build'){
+		// Docker Build
+		docker.withRegistry("https://${ECR_PATH}", "ecr:${REGION}:${AWS_CREDENTIAL_ID}"){
+			image = docker.build("${ECR_PATH}/${ECR_IMAGE}", "--network=host --no-cache .")
 		}
-		stage('Docker Build'){
-			// Docker Build
-			docker.withRegistry("https://${ECR_PATH}", "ecr:${REGION}:${AWS_CREDENTIAL_ID}"){
-				image = docker.build("${ECR_PATH}/${ECR_IMAGE}", "--network=host --no-cache .")
-			}
+	}
+	stage('Push to ECR'){
+		docker.withRegistry("https://${ECR_PATH}", "ecr:${REGION}:${AWS_CREDENTIAL_ID}"){
+			image.push("v${env.BUILD_NUMBER}")
 		}
-		stage('Push to ECR'){
-			docker.withRegistry("https://${ECR_PATH}", "ecr:${REGION}:${AWS_CREDENTIAL_ID}"){
-				image.push("v${env.BUILD_NUMBER}")
-			}
-		}
-		stage('CleanUp Images'){
-			sh"""
-			docker rmi ${ECR_PATH}/${ECR_IMAGE}:v$BUILD_NUMBER
-			docker rmi ${ECR_PATH}/${ECR_IMAGE}:latest
-			"""
-		}
+	}
+	stage('CleanUp Images'){
+		sh"""
+		docker rmi ${ECR_PATH}/${ECR_IMAGE}:v$BUILD_NUMBER
+		docker rmi ${ECR_PATH}/${ECR_IMAGE}:latest
+		"""
+	}
+}
