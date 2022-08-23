@@ -1,6 +1,6 @@
 REGION = 'ap-northeast-2'
 EKS_API = 'https://05AF9B978004587F32EB5F7BFBA55723.gr7.ap-northeast-2.eks.amazonaws.com'
-EKS_CLUSTER_NAME='test-cluster'
+EKS_CLUSTER_NAME='Jenkins-EKS-Cluster'
 EKS_NAMESPACE='default'
 EKS_JENKINS_CREDENTIAL_ID='kubectl-deploy-credentials'
 ECR_PATH = '690767153734.dkr.ecr.ap-northeast-2.amazonaws.com'
